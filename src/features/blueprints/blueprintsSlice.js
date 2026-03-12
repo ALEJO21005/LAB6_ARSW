@@ -1,15 +1,8 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import api from '../../services/apiClient.js'
 
-export const fetchAuthors = createAsyncThunk('blueprints/fetchAuthors', async () => {
-  const { data } = await api.get('/blueprints')
-  // Expecting API returns array of {author, name, points}
-  const authors = [...new Set(data.map((bp) => bp.author))]
-  return authors
-})
-
 export const fetchByAuthor = createAsyncThunk('blueprints/fetchByAuthor', async (author) => {
-  const { data } = await api.get(`/blueprints/${encodeURIComponent(author)}`)
+  const { data } = await api.get(`/v1/blueprints/${encodeURIComponent(author)}`)
   return { author, items: data }
 })
 
@@ -17,14 +10,14 @@ export const fetchBlueprint = createAsyncThunk(
   'blueprints/fetchBlueprint',
   async ({ author, name }) => {
     const { data } = await api.get(
-      `/blueprints/${encodeURIComponent(author)}/${encodeURIComponent(name)}`,
+      `/v1/blueprints/${encodeURIComponent(author)}/${encodeURIComponent(name)}`,
     )
     return data
   },
 )
 
 export const createBlueprint = createAsyncThunk('blueprints/createBlueprint', async (payload) => {
-  const { data } = await api.post('/blueprints', payload)
+  const { data } = await api.post('/v1/blueprints', payload)
   return data
 })
 
@@ -40,26 +33,33 @@ const slice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(fetchAuthors.pending, (s) => {
+      .addCase(fetchByAuthor.pending, (s) => {
         s.status = 'loading'
       })
-      .addCase(fetchAuthors.fulfilled, (s, a) => {
+      .addCase(fetchByAuthor.fulfilled, (s, a) => {
         s.status = 'succeeded'
-        s.authors = a.payload
+        s.byAuthor[a.payload.author] = a.payload.items
       })
-      .addCase(fetchAuthors.rejected, (s, a) => {
+      .addCase(fetchByAuthor.rejected, (s, a) => {
         s.status = 'failed'
         s.error = a.error.message
-      })
-      .addCase(fetchByAuthor.fulfilled, (s, a) => {
-        s.byAuthor[a.payload.author] = a.payload.items
       })
       .addCase(fetchBlueprint.fulfilled, (s, a) => {
         s.current = a.payload
       })
       .addCase(createBlueprint.fulfilled, (s, a) => {
         const bp = a.payload
-        if (s.byAuthor[bp.author]) s.byAuthor[bp.author].push(bp)
+        if (s.byAuthor[bp.author]) {
+          const index = s.byAuthor[bp.author].findIndex(b => b.name === bp.name);
+          if (index > -1) {
+            s.byAuthor[bp.author][index] = bp;
+          } else {
+            s.byAuthor[bp.author].push(bp);
+          }
+        }
+        if (s.current && s.current.name === bp.name && s.current.author === bp.author) {
+          s.current = bp;
+        }
       })
   },
 })

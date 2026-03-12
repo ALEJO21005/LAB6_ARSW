@@ -1,60 +1,48 @@
 import { useEffect, useRef } from 'react'
 
-export default function BlueprintCanvas({ points = [], width = 520, height = 360 }) {
+export default function BlueprintCanvas({ id, points = [], width = 520, height = 360 }) {
   const ref = useRef(null)
 
   useEffect(() => {
     const canvas = ref.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
+    
+    // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-    ctx.fillStyle = '#0b1220'
+    
+    // Optional: Draw a background or grid
+    ctx.fillStyle = '#f0f0f0'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
-    ctx.strokeStyle = 'rgba(148,163,184,0.15)'
-    ctx.lineWidth = 1
-    for (let x = 0; x < canvas.width; x += 40) {
-      ctx.beginPath()
-      ctx.moveTo(x, 0)
-      ctx.lineTo(x, canvas.height)
-      ctx.stroke()
-    }
-    for (let y = 0; y < canvas.height; y += 40) {
-      ctx.beginPath()
-      ctx.moveTo(0, y)
-      ctx.lineTo(canvas.width, y)
-      ctx.stroke()
-    }
+
     if (points.length > 1) {
-      ctx.strokeStyle = '#93c5fd'
-      ctx.lineWidth = 2
       ctx.beginPath()
       ctx.moveTo(points[0].x, points[0].y)
       for (let i = 1; i < points.length; i++) {
         const p = points[i]
         ctx.lineTo(p.x, p.y)
       }
+      ctx.strokeStyle = '#0000ff' // Blue lines
+      ctx.lineWidth = 2
       ctx.stroke()
     }
-    ctx.fillStyle = '#fbbf24'
+
+    // Draw points
+    ctx.fillStyle = '#ff0000' // Red points
     for (const p of points) {
       ctx.beginPath()
       ctx.arc(p.x, p.y, 4, 0, Math.PI * 2)
       ctx.fill()
     }
-  }, [points])
+  }, [points, width, height])
 
   return (
     <canvas
       ref={ref}
+      id={id}
       width={width}
       height={height}
-      style={{
-        background: '#0b1220',
-        border: '1px solid #334155',
-        borderRadius: 12,
-        width: '100%',
-        maxWidth: width,
-      }}
+      className="border border-gray-400 rounded-md"
     />
   )
 }
