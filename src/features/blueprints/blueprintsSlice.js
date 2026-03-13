@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
+import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit'
 import blueprintsService from '../../services/blueprintsService.js'
 
 export const fetchByAuthor = createAsyncThunk('blueprints/fetchByAuthor', async (author) => {
@@ -32,6 +32,11 @@ const slice = createSlice({
     current: null,
     status: 'idle',
     error: null,
+    currentStatus: 'idle',
+    createStatus: 'idle',
+    createError: null,
+    addPointStatus: 'idle',
+    addPointError: null,
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -47,10 +52,22 @@ const slice = createSlice({
         s.status = 'failed'
         s.error = a.error.message
       })
+      .addCase(fetchBlueprint.pending, (s) => {
+        s.currentStatus = 'loading'
+      })
       .addCase(fetchBlueprint.fulfilled, (s, a) => {
+        s.currentStatus = 'succeeded'
         s.current = a.payload
       })
+      .addCase(fetchBlueprint.rejected, (s) => {
+        s.currentStatus = 'failed'
+      })
+      .addCase(createBlueprint.pending, (s) => {
+        s.createStatus = 'loading'
+        s.createError = null
+      })
       .addCase(createBlueprint.fulfilled, (s, a) => {
+        s.createStatus = 'succeeded'
         const bp = a.payload
         if (!s.byAuthor[bp.author]) {
           s.byAuthor[bp.author] = []
@@ -65,7 +82,16 @@ const slice = createSlice({
           s.current = bp
         }
       })
+      .addCase(createBlueprint.rejected, (s, a) => {
+        s.createStatus = 'failed'
+        s.createError = a.error.message
+      })
+      .addCase(addPoint.pending, (s) => {
+        s.addPointStatus = 'loading'
+        s.addPointError = null
+      })
       .addCase(addPoint.fulfilled, (s, a) => {
+        s.addPointStatus = 'succeeded'
         const bp = a.payload
         s.current = bp
         if (s.byAuthor[bp.author]) {
@@ -73,7 +99,20 @@ const slice = createSlice({
           if (index > -1) s.byAuthor[bp.author][index] = bp
         }
       })
+      .addCase(addPoint.rejected, (s, a) => {
+        s.addPointStatus = 'failed'
+        s.addPointError = a.error.message
+      })
   },
 })
 
 export default slice.reducer
+
+const selectByAuthor = (s) => s.blueprints.byAuthor
+
+export const selectTop5ByPoints = createSelector(selectByAuthor, (byAuthor) =>
+  Object.values(byAuthor)
+    .flat()
+    .sort((a, b) => (b.points?.length || 0) - (a.points?.length || 0))
+    .slice(0, 5),
+)
