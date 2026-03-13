@@ -1,20 +1,28 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api from '../services/apiClient.js'
 
 export default function LoginPage() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
+  const navigate = useNavigate()
 
   const submit = async (e) => {
     e.preventDefault()
     setError(null)
     try {
       const { data } = await api.post('/auth/login', { username, password })
-      localStorage.setItem('token', data.token)
-      alert('Login exitoso')
+      localStorage.setItem('token', data.access_token)
+      navigate('/')
     } catch (e) {
-      setError('Credenciales inválidas o servidor no disponible')
+      if (e.response?.status === 401) {
+        setError('Credenciales inválidas')
+      } else if (e.response) {
+        setError(`Error del servidor: ${e.response.status}`)
+      } else {
+        setError(`No se pudo conectar con el servidor: ${e.message}`)
+      }
     }
   }
 

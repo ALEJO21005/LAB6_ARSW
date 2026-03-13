@@ -10,7 +10,9 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "vitest --run",
-    "test:ui": "vitest"
+    "test:ui": "vitest --ui --reporter=verbose",
+    "test:report": "vitest --run --reporter=html",
+    "test:serve": "npm run test:report && npx serve tests -l 3030"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.2.0",
@@ -24,6 +26,7 @@
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^14.3.1",
     "@vitejs/plugin-react": "^4.2.0",
+    "@vitest/ui": "^3.2.4",
     "eslint": "^9.36.0",
     "eslint-plugin-react": "^7.37.5",
     "globals": "^16.4.0",
