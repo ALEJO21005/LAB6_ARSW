@@ -10,6 +10,7 @@ vi.mock('../src/features/blueprints/blueprintsSlice.js', () => ({
   fetchBlueprint: (payload) => ({ type: 'blueprints/fetchBlueprint', payload }),
   createBlueprint: (payload) => ({ type: 'blueprints/createBlueprint', payload }),
   addPoint: (payload) => ({ type: 'blueprints/addPoint', payload }),
+  selectTop5ByPoints: () => [],
 }))
 
 function makeStore(preloaded = {}) {
