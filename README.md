@@ -192,6 +192,101 @@ VITE_USE_MOCK=true
       - Laura Alejandra Venegas Piraban 
       - Sergio Alejandro Idarraga Torres
 ---
+## 1. Canvas (lienzo)  
+
+Se implementó un componente de canvas con tamaño definido para dibujar los planos sin ocupar toda la pantalla. En la imagen se observa el área de dibujo integrada en la interfaz, lista para renderizar puntos y segmentos cuando se selecciona un plano.
+
 <div align="center">
   <img src="Img/image.png" alt="alt text" width="500"/>
+</div>  
+
+## 2. Listar los planos de un autor  
+
+Se habilitó la consulta por autor y la visualización de resultados en tabla, mostrando nombre del plano, cantidad de puntos y la acción Open. La imagen evidencia el listado obtenido y la estructura esperada para navegar entre los planos disponibles.
+
+<div align="center">
+  <img src="Img/image1.png" alt="alt text" width="500"/>
+</div>  
+
+## 3. Seleccionar un plano y graficarlo  
+
+Al presionar Open se actualiza el plano actual y se recuperan sus puntos para dibujar las líneas de forma consecutiva en el canvas. En la imagen se aprecia el plano cargado y graficado correctamente, confirmando la interacción entre lista, estado y lienzo.
+
+<div align="center">
+  <img src="Img/image2.png" alt="alt text" width="500"/>
+</div> 
+
+
+## 4. Servicios: `apimock` y `apiclient`
+
+En este punto se implementaron dos servicios con la misma interfaz para desacoplar la fuente de datos de la interfaz. La conmutacion se realiza con una sola variable de entorno: cuando VITE_USE_MOCK=false se usa apiclient (API real con Axios) y cuando VITE_USE_MOCK=true se usa apimock (datos de prueba en memoria).  
+
+**Mock** referencia del contenido mock y resultado esperado de la carga en memoria.
+
+<div align="center">
+  <img src="Img/mock.png" alt="alt text" width="500"/>
+</div>
+
+**VITE_USE_MOCK=false:** configuracion de entorno en false, activando el consumo de la API real.
+
+<div align="center">
+  <img src="Img/false.png" alt="alt text" width="500"/>
+</div>
+
+Evidencia en ejecucion del flujo con API real, consultando datos del backend.
+
+<div align="center">
+  <img src="Img/false1.png" alt="alt text" width="500"/>
+</div>
+
+**VITE_USE_MOCK=true:** configuracion de entorno en true, habilitando el servicio mock.
+
+<div align="center">
+  <img src="Img/true.png" alt="alt text" width="500"/>
+</div>
+
+Evidencia en ejecucion usando datos simulados desde apimock.
+
+<div align="center">
+  <img src="Img/true1.png" alt="alt text" width="500"/>
+</div>
+
+## 5. Interfaz con React  
+
+En esta parte se evidencia que el nombre del plano seleccionado se muestra en la interfaz como estado global de Redux, sin manipulacion directa del DOM. La actualizacion de la vista se realiza mediante componentes React y flujo de props/estado, manteniendo una arquitectura declarativa.
+
+En la siguiente imágen se muestra la interfaz principal con el estado del plano reflejado en pantalla y los componentes renderizados de forma reactiva.
+
+<div align="center">
+  <img src="Img/React.png" alt="alt text" width="500"/>
+</div>
+
+En la siguiente imágen se evidencia la estructura y el comportamiento de actualizacion de la UI al cambiar el estado desde Redux.
+
+<div align="center">
+  <img src="Img/React0.png" alt="alt text" width="500"/>
+</div>   
+
+## 6. Estilos
+
+En este punto se implemento una capa de estilos CSS personalizada, sin depender de frameworks externos, con el objetivo de mejorar la legibilidad, la jerarquia visual y la experiencia de uso de la aplicacion. La base del diseño se construyo sobre variables CSS definidas en :root, lo que permitio centralizar colores, superficies y efectos de sombra para mantener consistencia en toda la interfaz. Se adopto una estetica dark mode con acentos azul/violeta, combinando un fondo oscuro con gradientes sutiles para dar profundidad y separar visualmente las zonas de trabajo.
+
+La mejora se aplico en los componentes principales: tarjetas con sombras y realce en estado activo, botones con gradiente y transiciones para click, campos de entrada con foco destacado y diferencia visual para valores de solo lectura, tabla con encabezados mas claros y filas resaltadas al pasar el cursor, y canvas con borde y glow para integrarlo al lenguaje visual general. Tambien se ajusto la navegacion con un estado activo mas evidente y se personalizo la scrollbar para mantener coherencia estetica. 
+
+<div align="center">
+  <img src="Img/estilos.png" alt="alt text" width="500"/>
+</div>  
+
+
+## 7. Pruebas unitarias
+
+En este punto se presentan evidencias de la ejecucion de pruebas unitarias orientadas a validar tres aspectos clave del laboratorio: el render del canvas, el envio de formularios y las interacciones basicas con Redux. Estas pruebas permiten comprobar que los componentes principales responden correctamente ante acciones del usuario y que el flujo esperado de la aplicacion se mantiene de forma consistente.
+
+La primera imagen muestra la ejecucion general de la suite de pruebas, evidenciando que los escenarios definidos para la interfaz fueron corridos satisfactoriamente. La segunda imagen complementa esta evidencia con el detalle del resultado obtenido, respaldando la validacion de comportamientos como la carga del lienzo, el procesamiento de datos ingresados en formularios y la respuesta del estado global ante acciones relacionadas con la consulta de blueprints.
+
+<div align="center">
+  <img src="Img/pruebas.png" alt="alt text" width="500"/>
+</div>
+<div align="center">
+  <img src="Img/pruebas1.png" alt="alt text" width="500"/>
 </div>
