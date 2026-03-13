@@ -4,15 +4,22 @@ export default function BlueprintForm({ onSubmit }) {
   const [author, setAuthor] = useState('')
   const [name, setName] = useState('')
   const [pointsJSON, setPointsJSON] = useState('[{"x":10,"y":10},{"x":40,"y":60}]')
+  const [formError, setFormError] = useState(null)
 
-  const handle = (e) => {
+  const handle = async (e) => {
     e.preventDefault()
+    setFormError(null)
+    let points
     try {
-      const points = JSON.parse(pointsJSON)
-      onSubmit({ author, name, points })
-    } catch (e) {
-      alert('JSON de puntos inválido')
+      points = JSON.parse(pointsJSON)
+    } catch {
+      setFormError('JSON de puntos inválido')
+      return
     }
+    await onSubmit({ author, name, points })
+    setAuthor('')
+    setName('')
+    setPointsJSON('[{"x":10,"y":10},{"x":40,"y":60}]')
   }
 
   return (
@@ -26,6 +33,7 @@ export default function BlueprintForm({ onSubmit }) {
             value={author}
             onChange={(e) => setAuthor(e.target.value)}
             placeholder="juan.perez"
+            required
           />
         </div>
         <div>
@@ -35,6 +43,7 @@ export default function BlueprintForm({ onSubmit }) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="mi-dibujo"
+            required
           />
         </div>
       </div>
@@ -47,6 +56,7 @@ export default function BlueprintForm({ onSubmit }) {
           onChange={(e) => setPointsJSON(e.target.value)}
         />
       </div>
+      {formError && <p style={{ color: '#f87171', marginTop: 8 }}>{formError}</p>}
       <div style={{ marginTop: 12 }}>
         <button className="btn primary">Guardar</button>
       </div>
