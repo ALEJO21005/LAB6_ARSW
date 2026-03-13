@@ -3,14 +3,19 @@ import { useDispatch, useSelector } from 'react-redux'
 import {
   fetchByAuthor,
   fetchBlueprint,
+  createBlueprint,
+  addPoint,
 } from '../features/blueprints/blueprintsSlice.js'
 import BlueprintCanvas from '../components/BlueprintCanvas.jsx'
+import BlueprintForm from '../components/BlueprintForm.jsx'
 
 export default function BlueprintsPage() {
   const dispatch = useDispatch()
-  const { byAuthor, current, status } = useSelector((s) => s.blueprints)
+  const { byAuthor, current, status, error } = useSelector((s) => s.blueprints)
   const [authorInput, setAuthorInput] = useState('')
   const [selectedAuthor, setSelectedAuthor] = useState('')
+  const [pointX, setPointX] = useState('')
+  const [pointY, setPointY] = useState('')
   const items = byAuthor[selectedAuthor] || []
 
   const totalPoints = useMemo(
@@ -26,6 +31,22 @@ export default function BlueprintsPage() {
 
   const openBlueprint = (bp) => {
     dispatch(fetchBlueprint({ author: bp.author, name: bp.name }))
+  }
+
+  const handleCreate = async (payload) => {
+    await dispatch(createBlueprint(payload))
+    setAuthorInput(payload.author)
+    setSelectedAuthor(payload.author)
+  }
+
+  const handleAddPoint = (e) => {
+    e.preventDefault()
+    if (!current) return
+    const x = Number(pointX)
+    const y = Number(pointY)
+    dispatch(addPoint({ author: current.author, name: current.name, point: { x, y } }))
+    setPointX('')
+    setPointY('')
   }
 
   return (
@@ -50,6 +71,7 @@ export default function BlueprintsPage() {
             </div>
           </div>
           {status === 'loading' && <p>Loading...</p>}
+          {status === 'failed' && <p style={{ color: '#f87171' }}>Error: {error}</p>}
           {selectedAuthor && (
             <p>
               Blueprints by <strong>{selectedAuthor}</strong>
@@ -81,14 +103,61 @@ export default function BlueprintsPage() {
           </div>
           <div className="card-footer">Total points: {totalPoints}</div>
         </div>
+
+        <BlueprintForm onSubmit={handleCreate} />
       </section>
-      <section>
+
+      <section className="grid" style={{ gap: 16 }}>
         <div className="card">
-          <h3 style={{ marginTop: 0 }}>
-            Current blueprint: {current?.name || 'none'}
-          </h3>
+          <div className="form-group" style={{ marginBottom: 12 }}>
+            <label htmlFor="current-blueprint">Current blueprint</label>
+            <input
+              id="current-blueprint"
+              className="input"
+              readOnly
+              value={current?.name || ''}
+              placeholder="No blueprint selected"
+            />
+          </div>
           <BlueprintCanvas id="blueprint-canvas-1" points={current?.points} />
         </div>
+
+        {current && (
+          <div className="card">
+            <h3 style={{ marginTop: 0 }}>Agregar punto</h3>
+            <form onSubmit={handleAddPoint}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+                <div>
+                  <label>X</label>
+                  <input
+                    type="number"
+                    className="input"
+                    value={pointX}
+                    onChange={(e) => setPointX(e.target.value)}
+                    placeholder="0"
+                    required
+                    style={{ width: 80 }}
+                  />
+                </div>
+                <div>
+                  <label>Y</label>
+                  <input
+                    type="number"
+                    className="input"
+                    value={pointY}
+                    onChange={(e) => setPointY(e.target.value)}
+                    placeholder="0"
+                    required
+                    style={{ width: 80 }}
+                  />
+                </div>
+                <button className="btn primary" type="submit">
+                  Add Point
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
       </section>
     </div>
   )

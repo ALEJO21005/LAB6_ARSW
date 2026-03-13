@@ -1,25 +1,28 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
-import api from '../../services/apiClient.js'
+import blueprintsService from '../../services/blueprintsService.js'
 
 export const fetchByAuthor = createAsyncThunk('blueprints/fetchByAuthor', async (author) => {
-  const { data } = await api.get(`/v1/blueprints/${encodeURIComponent(author)}`)
-  return { author, items: data }
+  const items = await blueprintsService.getByAuthor(author)
+  return { author, items }
 })
 
 export const fetchBlueprint = createAsyncThunk(
   'blueprints/fetchBlueprint',
   async ({ author, name }) => {
-    const { data } = await api.get(
-      `/v1/blueprints/${encodeURIComponent(author)}/${encodeURIComponent(name)}`,
-    )
-    return data
+    return await blueprintsService.getByAuthorAndName(author, name)
   },
 )
 
 export const createBlueprint = createAsyncThunk('blueprints/createBlueprint', async (payload) => {
-  const { data } = await api.post('/v1/blueprints', payload)
-  return data
+  return await blueprintsService.create(payload)
 })
+
+export const addPoint = createAsyncThunk(
+  'blueprints/addPoint',
+  async ({ author, name, point }) => {
+    return await blueprintsService.addPoint(author, name, point)
+  },
+)
 
 const slice = createSlice({
   name: 'blueprints',
@@ -49,16 +52,25 @@ const slice = createSlice({
       })
       .addCase(createBlueprint.fulfilled, (s, a) => {
         const bp = a.payload
-        if (s.byAuthor[bp.author]) {
-          const index = s.byAuthor[bp.author].findIndex(b => b.name === bp.name);
-          if (index > -1) {
-            s.byAuthor[bp.author][index] = bp;
-          } else {
-            s.byAuthor[bp.author].push(bp);
-          }
+        if (!s.byAuthor[bp.author]) {
+          s.byAuthor[bp.author] = []
+        }
+        const index = s.byAuthor[bp.author].findIndex((b) => b.name === bp.name)
+        if (index > -1) {
+          s.byAuthor[bp.author][index] = bp
+        } else {
+          s.byAuthor[bp.author].push(bp)
         }
         if (s.current && s.current.name === bp.name && s.current.author === bp.author) {
-          s.current = bp;
+          s.current = bp
+        }
+      })
+      .addCase(addPoint.fulfilled, (s, a) => {
+        const bp = a.payload
+        s.current = bp
+        if (s.byAuthor[bp.author]) {
+          const index = s.byAuthor[bp.author].findIndex((b) => b.name === bp.name)
+          if (index > -1) s.byAuthor[bp.author][index] = bp
         }
       })
   },
