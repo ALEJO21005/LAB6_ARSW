@@ -5,13 +5,17 @@ import {
   fetchBlueprint,
   createBlueprint,
   addPoint,
+  selectTop5ByPoints,
 } from '../features/blueprints/blueprintsSlice.js'
 import BlueprintCanvas from '../components/BlueprintCanvas.jsx'
 import BlueprintForm from '../components/BlueprintForm.jsx'
 
 export default function BlueprintsPage() {
   const dispatch = useDispatch()
-  const { byAuthor, current, status, error } = useSelector((s) => s.blueprints)
+  const { byAuthor, current, status, error, createStatus, addPointStatus } = useSelector(
+    (s) => s.blueprints,
+  )
+  const top5 = useSelector(selectTop5ByPoints)
   const [authorInput, setAuthorInput] = useState('')
   const [selectedAuthor, setSelectedAuthor] = useState('')
   const [pointX, setPointX] = useState('')
@@ -49,6 +53,11 @@ export default function BlueprintsPage() {
     setPointY('')
   }
 
+  const handleCanvasPoint = ({ x, y }) => {
+    if (!current) return
+    dispatch(addPoint({ author: current.author, name: current.name, point: { x, y } }))
+  }
+
   return (
     <div className="grid" style={{ gridTemplateColumns: '1.1fr 1.4fr', gap: 24 }}>
       <section className="grid" style={{ gap: 16 }}>
@@ -65,13 +74,27 @@ export default function BlueprintsPage() {
                 onKeyDown={(e) => e.key === 'Enter' && getBlueprints()}
                 placeholder="Enter author name"
               />
-              <button className="btn primary" onClick={getBlueprints}>
-                Get Blueprints
+              <button
+                className="btn primary"
+                onClick={getBlueprints}
+                disabled={status === 'loading'}
+              >
+                {status === 'loading' ? 'Cargando…' : 'Get Blueprints'}
               </button>
             </div>
           </div>
-          {status === 'loading' && <p>Loading...</p>}
-          {status === 'failed' && <p style={{ color: '#f87171' }}>Error: {error}</p>}
+          {status === 'loading' && <p>Cargando blueprints…</p>}
+          {status === 'failed' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <p style={{ color: '#f87171', margin: 0 }}>Error: {error}</p>
+              <button
+                className="btn"
+                onClick={() => selectedAuthor && dispatch(fetchByAuthor(selectedAuthor))}
+              >
+                Reintentar
+              </button>
+            </div>
+          )}
           {selectedAuthor && (
             <p>
               Blueprints by <strong>{selectedAuthor}</strong>
@@ -104,7 +127,36 @@ export default function BlueprintsPage() {
           <div className="card-footer">Total points: {totalPoints}</div>
         </div>
 
-        <BlueprintForm onSubmit={handleCreate} />
+        {top5.length > 0 && (
+          <div className="card">
+            <h3 style={{ marginTop: 0, fontSize: '0.95rem' }}>Top 5 blueprints (por puntos)</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Autor</th>
+                  <th>Nombre</th>
+                  <th>Puntos</th>
+                </tr>
+              </thead>
+              <tbody>
+                {top5.map((bp, i) => (
+                  <tr key={`${bp.author}-${bp.name}`}>
+                    <td>{i + 1}</td>
+                    <td>{bp.author}</td>
+                    <td>{bp.name}</td>
+                    <td>{bp.points?.length || 0}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <BlueprintForm
+          onSubmit={handleCreate}
+          loading={createStatus === 'loading'}
+        />
       </section>
 
       <section className="grid" style={{ gap: 16 }}>
@@ -119,7 +171,16 @@ export default function BlueprintsPage() {
               placeholder="No blueprint selected"
             />
           </div>
-          <BlueprintCanvas id="blueprint-canvas-1" points={current?.points} />
+          {current && (
+            <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: '0 0 8px' }}>
+              Haz clic en el canvas para agregar un punto
+            </p>
+          )}
+          <BlueprintCanvas
+            id="blueprint-canvas-1"
+            points={current?.points}
+            onPointAdded={current ? handleCanvasPoint : undefined}
+          />
         </div>
 
         {current && (
@@ -151,8 +212,12 @@ export default function BlueprintsPage() {
                     style={{ width: 80 }}
                   />
                 </div>
-                <button className="btn primary" type="submit">
-                  Add Point
+                <button
+                  className="btn primary"
+                  type="submit"
+                  disabled={addPointStatus === 'loading'}
+                >
+                  {addPointStatus === 'loading' ? 'Guardando…' : 'Add Point'}
                 </button>
               </div>
             </form>

@@ -2,8 +2,9 @@ import { useEffect, useRef } from 'react'
 
 const PADDING = 30
 
-export default function BlueprintCanvas({ id, points = [], width = 520, height = 360 }) {
+export default function BlueprintCanvas({ id, points = [], width = 520, height = 360, onPointAdded }) {
   const ref = useRef(null)
+  const transformRef = useRef({ minX: 0, minY: 0, scale: 1 })
 
   useEffect(() => {
     const canvas = ref.current
@@ -30,6 +31,8 @@ export default function BlueprintCanvas({ id, points = [], width = 520, height =
     const scaleY = (canvas.height - PADDING * 2) / rangeY
     const scale = Math.min(scaleX, scaleY)
 
+    transformRef.current = { minX, minY, scale }
+
     const toCanvasX = (x) => PADDING + (x - minX) * scale
     const toCanvasY = (y) => PADDING + (y - minY) * scale
 
@@ -54,6 +57,18 @@ export default function BlueprintCanvas({ id, points = [], width = 520, height =
     }
   }, [points, width, height])
 
+  const handleClick = (e) => {
+    if (!onPointAdded) return
+    const canvas = ref.current
+    const rect = canvas.getBoundingClientRect()
+    const px = (e.clientX - rect.left) * (canvas.width / rect.width)
+    const py = (e.clientY - rect.top) * (canvas.height / rect.height)
+    const { minX, minY, scale } = transformRef.current
+    const x = Math.round((px - PADDING) / scale + minX)
+    const y = Math.round((py - PADDING) / scale + minY)
+    onPointAdded({ x, y })
+  }
+
   return (
     <canvas
       ref={ref}
@@ -61,6 +76,8 @@ export default function BlueprintCanvas({ id, points = [], width = 520, height =
       width={width}
       height={height}
       className="border border-gray-400 rounded-md"
+      onClick={handleClick}
+      style={onPointAdded ? { cursor: 'crosshair' } : undefined}
     />
   )
 }

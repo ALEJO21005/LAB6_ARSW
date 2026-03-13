@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-export default function BlueprintForm({ onSubmit }) {
+export default function BlueprintForm({ onSubmit, loading = false }) {
   const [author, setAuthor] = useState('')
   const [name, setName] = useState('')
   const [pointsJSON, setPointsJSON] = useState('[{"x":10,"y":10},{"x":40,"y":60}]')
@@ -58,7 +58,9 @@ export default function BlueprintForm({ onSubmit }) {
       </div>
       {formError && <p style={{ color: '#f87171', marginTop: 8 }}>{formError}</p>}
       <div style={{ marginTop: 12 }}>
-        <button className="btn primary">Guardar</button>
+        <button className="btn primary" disabled={loading}>
+          {loading ? 'Guardando…' : 'Guardar'}
+        </button>
       </div>
     </form>
   )
