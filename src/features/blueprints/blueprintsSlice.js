@@ -26,6 +26,32 @@ export const addPoint = createAsyncThunk(
   },
 )
 
+export const deleteBlueprint = createAsyncThunk(
+  'blueprints/deleteBlueprint',
+  async ({ author, name }) => {
+    await blueprintsService.deleteBlueprint(author, name)
+    return { author, name }
+  },
+)
+
+export const deleteByAuthor = createAsyncThunk(
+  'blueprints/deleteByAuthor',
+  async (author) => {
+    await blueprintsService.deleteByAuthor(author)
+    return author
+  },
+)
+
+export const deletePoint = createAsyncThunk(
+  'blueprints/deletePoint',
+  async ({ author, name, x, y }) => {
+    const result = await blueprintsService.deletePoint(author, name, x, y)
+    // Re-fetch the updated blueprint to get the new point list
+    const updatedBlueprint = await blueprintsService.getByAuthorAndName(author, name)
+    return updatedBlueprint
+  },
+)
+
 const slice = createSlice({
   name: 'blueprints',
   initialState: {
@@ -39,6 +65,12 @@ const slice = createSlice({
     createError: null,
     addPointStatus: 'idle',
     addPointError: null,
+    deleteStatus: 'idle',
+    deleteError: null,
+    deleteAuthorStatus: 'idle',
+    deleteAuthorError: null,
+    deletePointStatus: 'idle',
+    deletePointError: null,
     wsStatus: 'idle',
     wsError: null,
   },
@@ -136,6 +168,73 @@ const slice = createSlice({
       .addCase(addPoint.rejected, (s, a) => {
         s.addPointStatus = 'failed'
         s.addPointError = a.error.message
+      })
+      .addCase(deleteBlueprint.pending, (s) => {
+        s.deleteStatus = 'loading'
+        s.deleteError = null
+      })
+      .addCase(deleteBlueprint.fulfilled, (s, a) => {
+        s.deleteStatus = 'succeeded'
+        const { author, name } = a.payload
+
+        // Remove from byAuthor collection
+        if (s.byAuthor[author]) {
+          s.byAuthor[author] = s.byAuthor[author].filter(bp => bp.name !== name)
+        }
+
+        // Clear current if it matches the deleted blueprint
+        if (s.current?.author === author && s.current?.name === name) {
+          s.current = null
+        }
+      })
+      .addCase(deleteBlueprint.rejected, (s, a) => {
+        s.deleteStatus = 'failed'
+        s.deleteError = a.error.message
+      })
+      .addCase(deleteByAuthor.pending, (s) => {
+        s.deleteAuthorStatus = 'loading'
+        s.deleteAuthorError = null
+      })
+      .addCase(deleteByAuthor.fulfilled, (s, a) => {
+        s.deleteAuthorStatus = 'succeeded'
+        const author = a.payload
+
+        // Remove all blueprints for this author
+        delete s.byAuthor[author]
+
+        // Clear current if it matches the deleted author
+        if (s.current?.author === author) {
+          s.current = null
+        }
+      })
+      .addCase(deleteByAuthor.rejected, (s, a) => {
+        s.deleteAuthorStatus = 'failed'
+        s.deleteAuthorError = a.error.message
+      })
+      .addCase(deletePoint.pending, (s) => {
+        s.deletePointStatus = 'loading'
+        s.deletePointError = null
+      })
+      .addCase(deletePoint.fulfilled, (s, a) => {
+        s.deletePointStatus = 'succeeded'
+        const updatedBlueprint = a.payload
+
+        // Update current blueprint if it matches
+        if (s.current?.author === updatedBlueprint.author && s.current?.name === updatedBlueprint.name) {
+          s.current = updatedBlueprint
+        }
+
+        // Update in byAuthor collection
+        if (s.byAuthor[updatedBlueprint.author]) {
+          const index = s.byAuthor[updatedBlueprint.author].findIndex(bp => bp.name === updatedBlueprint.name)
+          if (index > -1) {
+            s.byAuthor[updatedBlueprint.author][index] = updatedBlueprint
+          }
+        }
+      })
+      .addCase(deletePoint.rejected, (s, a) => {
+        s.deletePointStatus = 'failed'
+        s.deletePointError = a.error.message
       })
   },
 })

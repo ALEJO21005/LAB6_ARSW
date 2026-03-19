@@ -5,6 +5,9 @@ import {
   fetchBlueprint,
   createBlueprint,
   addPoint,
+  deleteBlueprint,
+  deleteByAuthor,
+  deletePoint,
   selectTop5ByPoints,
 } from '../features/blueprints/blueprintsSlice.js'
 import BlueprintCanvas from '../components/BlueprintCanvas.jsx'
@@ -12,7 +15,7 @@ import BlueprintForm from '../components/BlueprintForm.jsx'
 
 export default function BlueprintsPage() {
   const dispatch = useDispatch()
-  const { byAuthor, current, status, error, createStatus, addPointStatus } = useSelector(
+  const { byAuthor, current, status, error, createStatus, addPointStatus, deleteStatus, deleteAuthorStatus, deletePointStatus } = useSelector(
     (s) => s.blueprints,
   )
   const top5 = useSelector(selectTop5ByPoints)
@@ -58,6 +61,26 @@ export default function BlueprintsPage() {
     dispatch(addPoint({ author: current.author, name: current.name, point: { x, y } }))
   }
 
+  const handleDeleteBlueprint = (author, name) => {
+    if (confirm(`¿Estás seguro de que deseas eliminar el blueprint "${name}" de "${author}"?`)) {
+      dispatch(deleteBlueprint({ author, name }))
+    }
+  }
+
+  const handleDeleteByAuthor = () => {
+    if (!selectedAuthor) return
+    if (confirm(`¿Estás seguro de que deseas eliminar TODOS los blueprints de "${selectedAuthor}"?`)) {
+      dispatch(deleteByAuthor(selectedAuthor))
+    }
+  }
+
+  const handleDeletePoint = (x, y) => {
+    if (!current) return
+    if (confirm(`¿Estás seguro de que deseas eliminar el punto (${x}, ${y})?`)) {
+      dispatch(deletePoint({ author: current.author, name: current.name, x, y }))
+    }
+  }
+
   return (
     <div className="grid" style={{ gridTemplateColumns: '1.1fr 1.4fr', gap: 24 }}>
       <section className="grid" style={{ gap: 16 }}>
@@ -96,9 +119,19 @@ export default function BlueprintsPage() {
             </div>
           )}
           {selectedAuthor && (
-            <p>
-              Blueprints by <strong>{selectedAuthor}</strong>
-            </p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <p style={{ margin: 0 }}>
+                Blueprints by <strong>{selectedAuthor}</strong>
+              </p>
+              <button
+                className="btn"
+                style={{ backgroundColor: '#dc2626', color: 'white', fontSize: '0.875rem' }}
+                onClick={handleDeleteByAuthor}
+                disabled={deleteAuthorStatus === 'loading'}
+              >
+                {deleteAuthorStatus === 'loading' ? 'Eliminando...' : `Delete All by ${selectedAuthor}`}
+              </button>
+            </div>
           )}
           <div className="card" style={{ overflowY: 'auto', maxHeight: 300 }}>
             <table>
@@ -106,7 +139,7 @@ export default function BlueprintsPage() {
                 <tr>
                   <th>Name</th>
                   <th>Points</th>
-                  <th></th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -115,9 +148,19 @@ export default function BlueprintsPage() {
                     <td>{bp.name}</td>
                     <td>{bp.points?.length || 0}</td>
                     <td>
-                      <button className="btn" onClick={() => openBlueprint(bp)}>
-                        Open
-                      </button>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button className="btn" onClick={() => openBlueprint(bp)}>
+                          Open
+                        </button>
+                        <button
+                          className="btn"
+                          style={{ backgroundColor: '#ef4444', color: 'white' }}
+                          onClick={() => handleDeleteBlueprint(bp.author, bp.name)}
+                          disabled={deleteStatus === 'loading'}
+                        >
+                          {deleteStatus === 'loading' ? 'Deleting...' : 'Delete'}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -223,6 +266,41 @@ export default function BlueprintsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        )}
+
+        {current && current.points && current.points.length > 0 && (
+          <div className="card">
+            <h3 style={{ marginTop: 0 }}>Eliminar puntos</h3>
+            <div style={{ maxHeight: 200, overflowY: 'auto' }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>X</th>
+                    <th>Y</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {current.points.map((point, index) => (
+                    <tr key={`${point.x}-${point.y}-${index}`}>
+                      <td>{point.x}</td>
+                      <td>{point.y}</td>
+                      <td>
+                        <button
+                          className="btn"
+                          style={{ backgroundColor: '#ef4444', color: 'white', fontSize: '0.8rem' }}
+                          onClick={() => handleDeletePoint(point.x, point.y)}
+                          disabled={deletePointStatus === 'loading'}
+                        >
+                          {deletePointStatus === 'loading' ? 'Deleting...' : 'Delete'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </section>
