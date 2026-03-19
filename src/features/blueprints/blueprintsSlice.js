@@ -19,7 +19,9 @@ export const createBlueprint = createAsyncThunk('blueprints/createBlueprint', as
 
 export const addPoint = createAsyncThunk(
   'blueprints/addPoint',
-  async ({ author, name, point }) => {
+  async ({ author, name, point }, { getState }) => {
+    const state = getState()
+    const currentBlueprint = state.blueprints.current
     return await blueprintsService.addPoint(author, name, point)
   },
 )
@@ -37,8 +39,40 @@ const slice = createSlice({
     createError: null,
     addPointStatus: 'idle',
     addPointError: null,
+    wsStatus: 'idle',
+    wsError: null,
   },
-  reducers: {},
+  reducers: {
+    blueprintPointAdded(state, action) {
+      const { author, blueprintName, allPoints } = action.payload
+
+      // Update current blueprint if it matches
+      if (state.current?.author === author && state.current?.name === blueprintName) {
+        state.current = {
+          ...state.current,
+          points: allPoints,
+        }
+      }
+
+      // Update in byAuthor collection
+      if (state.byAuthor[author]) {
+        const index = state.byAuthor[author].findIndex((bp) => bp.name === blueprintName)
+        if (index > -1) {
+          state.byAuthor[author][index] = {
+            ...state.byAuthor[author][index],
+            points: allPoints,
+          }
+        }
+      }
+    },
+
+    wsConnectionChanged(state, action) {
+      state.wsStatus = action.payload.status
+      if (action.payload.error) {
+        state.wsError = action.payload.error
+      }
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchByAuthor.pending, (s) => {
@@ -107,6 +141,8 @@ const slice = createSlice({
 })
 
 export default slice.reducer
+
+export const { blueprintPointAdded, wsConnectionChanged } = slice.actions
 
 const selectByAuthor = (s) => s.blueprints.byAuthor
 

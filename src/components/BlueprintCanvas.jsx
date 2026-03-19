@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 
 const PADDING = 30
 
-export default function BlueprintCanvas({ id, points = [], width = 520, height = 360, onPointAdded }) {
+export default function BlueprintCanvas({ id, author, name, points = [], width = 520, height = 360, onPointClick}) {
   const ref = useRef(null)
   const transformRef = useRef({ minX: 0, minY: 0, scale: 1 })
 
@@ -58,7 +58,7 @@ export default function BlueprintCanvas({ id, points = [], width = 520, height =
   }, [points, width, height])
 
   const handleClick = (e) => {
-    if (!onPointAdded) return
+    if (!author || !name) return
     const canvas = ref.current
     const rect = canvas.getBoundingClientRect()
     const px = (e.clientX - rect.left) * (canvas.width / rect.width)
@@ -66,7 +66,14 @@ export default function BlueprintCanvas({ id, points = [], width = 520, height =
     const { minX, minY, scale } = transformRef.current
     const x = Math.round((px - PADDING) / scale + minX)
     const y = Math.round((py - PADDING) / scale + minY)
-    onPointAdded({ x, y })
+
+    const point = { x, y }
+    console.log('Adding point:', point)
+
+    if (onPointClick){
+      onPointClick(point)
+    }
+    //onPointAdded(point)
   }
 
   return (
@@ -77,7 +84,7 @@ export default function BlueprintCanvas({ id, points = [], width = 520, height =
       height={height}
       className="border border-gray-400 rounded-md"
       onClick={handleClick}
-      style={onPointAdded ? { cursor: 'crosshair' } : undefined}
+      style={onPointClick ? { cursor: 'crosshair' } : undefined}
     />
   )
 }

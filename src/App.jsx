@@ -4,10 +4,12 @@ import BlueprintDetailPage from './pages/BlueprintDetailPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import NotFound from './pages/NotFound.jsx'
 import PrivateRoute from './components/PrivateRoute.jsx'
+import WebSocketManager from './components/WebSocketManager.jsx'
 
 export default function App() {
   return (
     <div className="container">
+      <WebSocketManager />
       <header>
         <h1>ECI - Laboratorio de Blueprints en React</h1>
         <nav>

@@ -178,8 +178,10 @@ export default function BlueprintsPage() {
           )}
           <BlueprintCanvas
             id="blueprint-canvas-1"
+            author={current?.author}
+            name={current?.name}
             points={current?.points}
-            onPointAdded={current ? handleCanvasPoint : undefined}
+            onPointClick={(point) => dispatch(addPoint({ author: current.author, name: current.name, point }))}
           />
         </div>
 
